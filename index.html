@@ -1,0 +1,1499 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Sao Mona AI - Pro Web Studio IDE</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Kantumruy+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Monaco Editor (VS Code Engine) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Kantumruy Pro', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: #0f172a;
+            color: #f8fafc;
+            height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+
+        /* ================= TOP NAVBAR ================= */
+        .ide-navbar {
+            height: 54px;
+            background: #1e293b;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            z-index: 30;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .nav-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 700;
+            font-size: 15px;
+            color: #ffffff;
+            white-space: nowrap;
+        }
+
+        .logo span {
+            background: linear-gradient(135deg, #6366f1, #a855f7);
+            color: white;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+
+        /* Settings Bar */
+        .nav-center {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+            max-width: 560px;
+        }
+
+        .input-api-key {
+            flex: 1;
+            background: #0f172a;
+            border: 1px solid #475569;
+            color: #38bdf8;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            outline: none;
+            font-family: monospace;
+            transition: 0.2s;
+        }
+        .input-api-key:focus { border-color: #6366f1; }
+
+        .model-dropdown {
+            background: #0f172a;
+            border: 1px solid #475569;
+            color: #f8fafc;
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: 0.2s;
+            white-space: nowrap;
+        }
+
+        .btn-run { background: #10b981; color: white; }
+        .btn-run:hover { background: #059669; }
+
+        .btn-clear-mobile {
+            display: none;
+            background: #ef4444;
+            color: white;
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            font-family: monospace;
+            border: none;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-clear-mobile:hover { background: #dc2626; }
+
+        .btn-codepen { background: #475569; color: white; }
+        .btn-codepen:hover { background: #334155; }
+
+        .btn-download { background: #334155; color: #cbd5e1; }
+        .btn-download:hover { background: #1e293b; }
+
+        .btn-toggle-ai {
+            background: linear-gradient(135deg, #4f46e5, #9333ea);
+            color: white;
+        }
+
+        /* ================= WORKSPACE (PC) ================= */
+        .workspace {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .editor-container {
+            width: 50%;
+            min-width: 200px;
+            display: flex;
+            flex-direction: column;
+            background: #1e1e1e;
+        }
+
+        .pane-header {
+            height: 34px;
+            background: #181825;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 12px;
+            font-size: 12px;
+            color: #94a3b8;
+            border-bottom: 1px solid #27273a;
+            flex-shrink: 0;
+        }
+
+        #monacoEditor {
+            flex: 1;
+            width: 100%;
+        }
+
+        /* Resizer (PC Only) */
+        .resizer {
+            width: 8px;
+            background: #1e293b;
+            border-left: 1px solid #334155;
+            border-right: 1px solid #334155;
+            cursor: col-resize;
+            transition: background 0.2s;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .resizer::after {
+            content: '';
+            width: 2px;
+            height: 24px;
+            background: #64748b;
+            border-radius: 2px;
+        }
+        .resizer:hover, .resizer.dragging { background: #6366f1; }
+        .resizer.dragging::after { background: white; }
+
+        .preview-container {
+            flex: 1;
+            min-width: 200px;
+            display: flex;
+            flex-direction: column;
+            background: #ffffff;
+            border-right: 1px solid #334155;
+        }
+
+        #previewFrame {
+            flex: 1;
+            width: 100%;
+            border: none;
+            background: #ffffff;
+        }
+
+        /* AI Sidebar */
+        .ai-sidebar {
+            width: 390px;
+            background: #0f172a;
+            display: flex;
+            flex-direction: column;
+            border-left: 1px solid #1e293b;
+            transition: width 0.3s ease;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .ai-sidebar.collapsed {
+            width: 0;
+            display: none;
+        }
+
+        .ai-header {
+            padding: 10px 14px;
+            background: #1e293b;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .ai-title {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #ffffff;
+            white-space: nowrap;
+        }
+
+        .ai-header-controls {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-mini {
+            background: #334155;
+            color: #e2e8f0;
+            border: none;
+            padding: 4px 9px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-mini:hover { background: #475569; color: white; }
+        .btn-mini.active { background: #4f46e5; color: white; }
+
+        .btn-close-ai {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 4px 6px;
+        }
+
+        .ai-body {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .ai-chat-view {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .ai-chat-box {
+            flex: 1;
+            padding: 14px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background: #090d16;
+        }
+
+        .chat-msg {
+            padding: 10px 14px;
+            font-size: 13px;
+            line-height: 1.6;
+            border-radius: 12px;
+            max-width: 92%;
+            word-break: break-word;
+        }
+
+        .user-msg {
+            align-self: flex-end;
+            background: #4f46e5;
+            color: white;
+            border-radius: 14px 14px 2px 14px;
+        }
+
+        .bot-msg {
+            align-self: flex-start;
+            background: #1e293b;
+            color: #e2e8f0;
+            border-radius: 14px 14px 14px 2px;
+            border: 1px solid #334155;
+        }
+
+        .bot-msg.error {
+            background: #451a1a;
+            color: #fca5a5;
+            border-color: #7f1d1d;
+        }
+
+        .bot-msg.abort {
+            background: #2d2013;
+            color: #fbd38d;
+            border-color: #dd6b20;
+        }
+
+        /* Code Box inside Chat */
+        .code-box {
+            margin: 8px 0;
+            background: #020617;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #334155;
+        }
+
+        .code-box-header {
+            padding: 6px 10px;
+            background: #0f172a;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            color: #94a3b8;
+        }
+
+        .code-box-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* ប៊ូតុង Copy នៅខាងមុខ */
+        .copy-btn-code {
+            background: #334155;
+            color: #e2e8f0;
+            border: none;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .copy-btn-code:hover { background: #475569; color: white; }
+        .copy-btn-code.copied { background: #10b981 !important; color: white !important; }
+
+        /* ប៊ូតុង ដាក់ចូល Editor */
+        .apply-btn {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .apply-btn:hover { background: #059669; }
+
+        .code-box pre {
+            padding: 10px;
+            color: #38bdf8;
+            font-family: 'Fira Code', monospace;
+            font-size: 12px;
+            overflow-x: auto;
+        }
+
+        /* History Drawer */
+        .ai-history-view {
+            position: absolute;
+            inset: 0;
+            background: #0f172a;
+            display: none;
+            flex-direction: column;
+            z-index: 15;
+            padding: 16px;
+            overflow-y: auto;
+        }
+        .ai-history-view.show { display: flex; }
+
+        .history-title {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .history-top-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .empty-history-text {
+            color: #94a3b8;
+            text-align: center;
+            margin-top: 60px;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .history-item {
+            background: #1e293b;
+            border: 1px solid #334155;
+            padding: 10px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .history-item:hover { border-color: #6366f1; background: #273549; }
+
+        .history-item-info { flex: 1; overflow: hidden; }
+        .history-item-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #f1f5f9;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .history-item-date { font-size: 10px; color: #94a3b8; margin-top: 2px; }
+
+        .delete-hist-btn {
+            background: none;
+            border: none;
+            color: #ef4444;
+            cursor: pointer;
+            padding: 4px 6px;
+            border-radius: 4px;
+        }
+
+        .quick-chips {
+            padding: 8px 12px;
+            background: #1e293b;
+            border-top: 1px solid #334155;
+            display: flex;
+            gap: 6px;
+            overflow-x: auto;
+            flex-shrink: 0;
+        }
+
+        .chip {
+            background: #0f172a;
+            border: 1px solid #475569;
+            color: #94a3b8;
+            padding: 4px 10px;
+            border-radius: 16px;
+            font-size: 11px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .ai-input-area {
+            padding: 12px;
+            background: #1e293b;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .ai-input {
+            flex: 1;
+            background: #0f172a;
+            border: 1px solid #475569;
+            color: white;
+            padding: 10px 14px;
+            border-radius: 20px;
+            outline: none;
+            font-size: 16px !important;
+        }
+
+        /* Send / Stop Button */
+        .send-btn-wrapper {
+            position: relative;
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .ai-send-btn {
+            background: #4f46e5;
+            color: white;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 2;
+            transition: 0.2s;
+        }
+
+        .send-btn-wrapper.running .ai-send-btn {
+            background: #ef4444;
+        }
+
+        .send-btn-wrapper.running::before {
+            content: '';
+            position: absolute;
+            inset: -3px;
+            border-radius: 50%;
+            background: conic-gradient(#38bdf8, #ef4444, #06b6d4, #38bdf8);
+            animation: spinRing 1s linear infinite;
+            filter: drop-shadow(0 0 6px #ef4444);
+            z-index: 1;
+        }
+
+        @keyframes spinRing { to { transform: rotate(360deg); } }
+
+        .live-speed-badge {
+            font-size: 11px;
+            color: #94a3b8;
+            margin-top: 4px;
+            margin-left: 6px;
+        }
+
+        /* ================= BOTTOM TABS (MOBILE) ================= */
+        .mobile-nav-tabs {
+            display: none;
+            height: 54px;
+            background: #1e293b;
+            border-top: 1px solid #334155;
+            flex-shrink: 0;
+            z-index: 30;
+        }
+
+        .m-tab {
+            flex: 1;
+            background: none;
+            border: none;
+            color: #94a3b8;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .m-tab svg { width: 18px; height: 18px; }
+        .m-tab.active { color: #38bdf8; }
+
+        /* ================= CONFIRMATION MODAL ================= */
+        .confirm-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(4px);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .confirm-modal-overlay.show { display: flex; }
+
+        .confirm-modal-box {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 18px;
+            padding: 22px;
+            width: 100%;
+            max-width: 360px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            animation: modalPop 0.2s ease-out;
+        }
+
+        .confirm-icon { font-size: 32px; margin-bottom: 10px; }
+        .confirm-text {
+            font-size: 15px;
+            font-weight: 600;
+            color: #f1f5f9;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+
+        .confirm-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .btn-confirm-no {
+            flex: 1;
+            padding: 10px;
+            background: #334155;
+            color: #cbd5e1;
+            border: none;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-confirm-no:hover { background: #475569; color: white; }
+
+        .btn-confirm-yes {
+            flex: 1;
+            padding: 10px;
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-confirm-yes:hover { background: #dc2626; }
+
+        @keyframes modalPop {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        /* Modal Settings លើ Mobile */
+        .mobile-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .mobile-modal.show { display: flex; }
+
+        .modal-content {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 16px;
+            padding: 20px;
+            width: 100%;
+            max-width: 360px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        /* ================= RESPONSIVE FOR MOBILE (< 768px) ================= */
+        @media (max-width: 768px) {
+            .ide-navbar { padding: 0 10px; }
+            .nav-center { display: none; }
+            .btn-codepen, .btn-download, .btn-toggle-ai { display: none; }
+
+            .btn-clear-mobile { display: inline-flex; }
+
+            .btn-settings-mobile {
+                background: #334155;
+                color: white;
+                border: none;
+                padding: 6px 10px;
+                border-radius: 8px;
+                font-size: 12px;
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                cursor: pointer;
+            }
+
+            .mobile-nav-tabs { display: flex; }
+            .resizer { display: none !important; }
+
+            .workspace { position: relative; flex: 1; }
+
+            .editor-container, .preview-container, .ai-sidebar {
+                position: absolute;
+                inset: 0;
+                width: 100% !important;
+                height: 100% !important;
+                display: none !important;
+                border: none !important;
+            }
+
+            .editor-container.m-active,
+            .preview-container.m-active,
+            .ai-sidebar.m-active {
+                display: flex !important;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .btn-settings-mobile { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Top Navigation -->
+<div class="ide-navbar">
+    <div class="nav-left">
+        <div class="logo">
+            <span>IDE</span>
+            Sao Mona
+        </div>
+    </div>
+
+    <!-- Center Settings (សម្រាប់ PC) -->
+    <div class="nav-center">
+        <input type="password" id="apiKeyInput" class="input-api-key" placeholder="បិទភ្ជាប់ API Key របស់អ្នកនៅទីនេះ..." title="API Key របស់អ្នក">
+        <select id="modelSelect" class="model-dropdown">
+            <option value="gemini-3.5-flash-lite">gemini-3.5-flash-lite</option>
+            <option value="gemini-3.5-flash">gemini-3.5-flash</option>
+            <option value="gemini-3.1-flash-lite">gemini-3.1-flash-lite</option>
+        </select>
+    </div>
+
+    <div class="nav-actions">
+        <!-- ប៊ូតុង <~> លុបកូដ (លើ Mobile ប៉ុណ្ណោះ) -->
+        <button class="btn btn-clear-mobile" onclick="promptClearEditor()" title="លុបកូដទាំងអស់">&lt;~&gt;</button>
+
+        <!-- Run Code -->
+        <button class="btn btn-run" onclick="runCode()" title="Run កូដ">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            <span>Run</span>
+        </button>
+
+        <!-- ប៊ូតុង PC -->
+        <button class="btn btn-codepen" onclick="copyForCodePen()">Copy ទៅ CodePen</button>
+        <button class="btn btn-download" onclick="downloadCode()">Download</button>
+        <button class="btn btn-toggle-ai" onclick="toggleAI()">✨ Sao Mona</button>
+
+        <!-- ប៊ូតុង Settings សម្រាប់ Mobile -->
+        <button class="btn-settings-mobile" onclick="openMobileModal()">
+            ⚙️ <span>ម៉ឺនុយ</span>
+        </button>
+    </div>
+</div>
+
+<!-- Main Workspace -->
+<div class="workspace" id="workspaceContainer">
+    <!-- Editor Pane -->
+    <div class="editor-container m-active" id="editorPane">
+        <div class="pane-header">
+            <span>📄 index.html</span>
+            <span style="font-size: 11px;">VS Code Engine</span>
+        </div>
+        <div id="monacoEditor"></div>
+    </div>
+
+    <!-- Draggable Resizer Bar (PC) -->
+    <div class="resizer" id="dragResizer" title="អូសពង្រីកបង្រួមទទឹង"></div>
+
+    <!-- Live Preview Pane -->
+    <div class="preview-container" id="previewPane">
+        <div class="pane-header" style="background: #f1f5f9; color: #475569; border-color: #cbd5e1;">
+            <span>🌐 Live Preview</span>
+            <button onclick="runCode()" style="background: none; border: none; cursor: pointer; color: #10b981; font-weight: 600;">🔄 Refresh</button>
+        </div>
+        <iframe id="previewFrame" sandbox="allow-scripts"></iframe>
+    </div>
+
+    <!-- AI Copilot Sidebar -->
+    <div class="ai-sidebar" id="aiSidebar">
+        <div class="ai-header">
+            <div class="ai-title">
+                <span>✨</span> Sao Mona Copilot
+            </div>
+            <div class="ai-header-controls">
+                <button class="btn-mini" onclick="startNewChat()">+ New Chat</button>
+                <button class="btn-mini" id="historyBtn" onclick="toggleHistory()">History</button>
+                <button class="btn-close-ai" onclick="toggleAI()">✕</button>
+            </div>
+        </div>
+
+        <div class="ai-body">
+            <!-- Chat View -->
+            <div class="ai-chat-view" id="chatView">
+                <div class="ai-chat-box" id="aiChatBox"></div>
+
+                <!-- Quick Chips -->
+                <div class="quick-chips">
+                    <div class="chip" onclick="quickPrompt('ជួយពិនិត្យរកមើល Bug និងកំហុសក្នុងកូដនេះ')">🐞 រក Bug</div>
+                    <div class="chip" onclick="quickPrompt('ជួយរៀបចំកូដឱ្យមានស្ទីលបែប Modern')">🎨 Modern UI</div>
+                    <div class="chip" onclick="quickPrompt('ជួយពន្យល់ថាតើកូដនេះដំណើរការយ៉ាងដូចម្តេច?')">📖 ពន្យល់កូដ</div>
+                </div>
+
+                <div class="ai-input-area">
+                    <input type="text" id="aiInput" class="ai-input" placeholder="ប្រាប់ Sao Mona..." autocomplete="off">
+                    
+                    <div class="send-btn-wrapper" id="sendBtnWrapper">
+                        <button class="ai-send-btn" id="aiSendBtn" onclick="handleSendOrStop()" title="ផ្ញើសារ ឬ ចុចបញ្ឈប់">
+                            <svg id="iconSend" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="22" y1="2" x2="11" y2="13"></line>
+                                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                            </svg>
+                            <svg id="iconStop" style="display: none;" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                <rect x="5" y="5" width="14" height="14" rx="2"></rect>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- History View -->
+            <div class="ai-history-view" id="historyView">
+                <div class="history-title">
+                    <span>📚 ប្រវត្តិជជែក</span>
+                    <div class="history-top-actions">
+                        <input type="file" id="importFileInput" accept=".json" style="display: none;" onchange="importHistoryFromFile(event)">
+                        <button class="btn-mini" onclick="document.getElementById('importFileInput').click()" title="បញ្ចូលប្រវត្តិពី File">📤 ដាក់ចូល</button>
+                        <button class="btn-mini" onclick="exportHistoryToFile()" title="ទាញយកប្រវត្តិទុកជា File">📥 Backup</button>
+                        <button class="btn-mini" style="color: #ef4444;" onclick="promptClearAllHistory()">លុបអស់</button>
+                    </div>
+                </div>
+                <div class="history-list" id="historyListContainer"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ================= BOTTOM TABS (MOBILE) ================= -->
+<div class="mobile-nav-tabs">
+    <button class="m-tab active" id="tabBtnCode" onclick="switchMobileTab('code')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+        <span>កូដ</span>
+    </button>
+    <button class="m-tab" id="tabBtnPreview" onclick="switchMobileTab('preview')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+        <span>លទ្ធផល</span>
+    </button>
+    <button class="m-tab" id="tabBtnAI" onclick="switchMobileTab('ai')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+        <span>Sao Mona</span>
+    </button>
+</div>
+
+<!-- ================= CONFIRMATION MODAL ================= -->
+<div class="confirm-modal-overlay" id="confirmModal">
+    <div class="confirm-modal-box">
+        <div class="confirm-icon">⚠️</div>
+        <div class="confirm-text" id="confirmModalText">តើអ្នកចង់ចុចលុបកូដទាំងអស់នៅក្នុង Editer ដែរឬទេ?</div>
+        <div class="confirm-actions">
+            <button class="btn-confirm-no" onclick="closeConfirmModal()">អត់ទេ</button>
+            <button class="btn-confirm-yes" id="btnConfirmYes">បាទ/ចាស៎</button>
+        </div>
+    </div>
+</div>
+
+<!-- ================= MODAL SETTINGS FOR MOBILE ================= -->
+<div class="mobile-modal" id="mobileSettingsModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <span>⚙️ ការកំណត់ & ឧបករណ៍</span>
+            <button class="modal-close" onclick="closeMobileModal()">✕</button>
+        </div>
+        
+        <div>
+            <label style="font-size: 12px; color: #94a3b8; display: block; margin-bottom: 4px;">API Key៖</label>
+            <input type="password" id="mApiKeyInput" class="input-api-key" style="width: 100%;" placeholder="បិទភ្ជាប់ API Key...">
+        </div>
+
+        <div>
+            <label style="font-size: 12px; color: #94a3b8; display: block; margin-bottom: 4px;">ម៉ូឌែល Gemini៖</label>
+            <select id="mModelSelect" class="model-dropdown" style="width: 100%;">
+                <option value="gemini-3.5-flash-lite">gemini-3.5-flash-lite</option>
+                <option value="gemini-3.5-flash">gemini-3.5-flash</option>
+                <option value="gemini-3.1-flash-lite">gemini-3.1-flash-lite</option>
+            </select>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 6px;">
+            <button class="btn btn-codepen" style="justify-content: center;" onclick="copyForCodePen(); closeMobileModal();">📋 Copy ទៅ CodePen</button>
+            <button class="btn btn-download" style="justify-content: center;" onclick="downloadCode(); closeMobileModal();">💾 Download HTML</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const apiKeyInput = document.getElementById('apiKeyInput');
+    const modelSelect = document.getElementById('modelSelect');
+    const mApiKeyInput = document.getElementById('mApiKeyInput');
+    const mModelSelect = document.getElementById('mModelSelect');
+
+    const previewFrame = document.getElementById('previewFrame');
+    const aiChatBox = document.getElementById('aiChatBox');
+    const aiInput = document.getElementById('aiInput');
+    const sendBtnWrapper = document.getElementById('sendBtnWrapper');
+    const aiSendBtn = document.getElementById('aiSendBtn');
+    const iconSend = document.getElementById('iconSend');
+    const iconStop = document.getElementById('iconStop');
+
+    const historyBtn = document.getElementById('historyBtn');
+    const historyView = document.getElementById('historyView');
+    const historyListContainer = document.getElementById('historyListContainer');
+
+    const confirmModal = document.getElementById('confirmModal');
+    const confirmModalText = document.getElementById('confirmModalText');
+    const btnConfirmYes = document.getElementById('btnConfirmYes');
+    let confirmCallback = null;
+
+    let editor = null;
+    let isGenerating = false;
+    let currentAbortController = null;
+
+    // Load API Key
+    const savedKey = localStorage.getItem('SAO_MONA_STUDIO_KEY') || "";
+    apiKeyInput.value = savedKey;
+    mApiKeyInput.value = savedKey;
+
+    function syncApiKey(val) {
+        apiKeyInput.value = val;
+        mApiKeyInput.value = val;
+        localStorage.setItem('SAO_MONA_STUDIO_KEY', val);
+    }
+    apiKeyInput.addEventListener('input', (e) => syncApiKey(e.target.value.trim()));
+    mApiKeyInput.addEventListener('input', (e) => syncApiKey(e.target.value.trim()));
+
+    modelSelect.addEventListener('change', (e) => mModelSelect.value = e.target.value);
+    mModelSelect.addEventListener('change', (e) => modelSelect.value = e.target.value);
+
+    function openMobileModal() { document.getElementById('mobileSettingsModal').classList.add('show'); }
+    function closeMobileModal() { document.getElementById('mobileSettingsModal').classList.remove('show'); }
+
+    /* ==========================================================
+       CONFIRMATION MODAL LOGIC
+    ========================================================== */
+    function showConfirmation(text, onYes) {
+        confirmModalText.textContent = text;
+        confirmCallback = onYes;
+        confirmModal.classList.add('show');
+    }
+
+    function closeConfirmModal() {
+        confirmModal.classList.remove('show');
+        confirmCallback = null;
+    }
+
+    btnConfirmYes.addEventListener('click', () => {
+        if (confirmCallback) confirmCallback();
+        closeConfirmModal();
+    });
+
+    function promptClearEditor() {
+        showConfirmation("តើអ្នកចង់ចុចលុបកូដទាំងអស់នៅក្នុង Editer ដែរឬទេ?", () => {
+            if (editor) {
+                editor.setValue("");
+                runCode();
+            }
+        });
+    }
+
+    function promptDeleteHistoryItem(sessionId, e) {
+        e.stopPropagation();
+        showConfirmation("តើអ្នកចង់លុបប្រវត្តិជជែកនេះដែរឬទេ?", () => {
+            let sessions = getSavedSessions().filter(s => s.id !== sessionId);
+            saveSessions(sessions);
+            renderHistoryList();
+        });
+    }
+
+    function promptClearAllHistory() {
+        showConfirmation("តើអ្នកចង់លុបប្រវត្តិជជែកទាំងអស់ចោលដែរឬទេ?", () => {
+            localStorage.removeItem(STORAGE_KEY_CHATS);
+            renderHistoryList();
+        });
+    }
+
+    /* ==========================================================
+       1. MOBILE TAB SWITCHING
+    ========================================================== */
+    function switchMobileTab(tab) {
+        document.querySelectorAll('.m-tab').forEach(b => b.classList.remove('active'));
+        document.getElementById('editorPane').classList.remove('m-active');
+        document.getElementById('previewPane').classList.remove('m-active');
+        document.getElementById('aiSidebar').classList.remove('m-active');
+
+        if (tab === 'code') {
+            document.getElementById('tabBtnCode').classList.add('active');
+            document.getElementById('editorPane').classList.add('m-active');
+            if (editor) setTimeout(() => editor.layout(), 100);
+        } else if (tab === 'preview') {
+            document.getElementById('tabBtnPreview').classList.add('active');
+            document.getElementById('previewPane').classList.add('m-active');
+            runCode();
+        } else if (tab === 'ai') {
+            document.getElementById('tabBtnAI').classList.add('active');
+            document.getElementById('aiSidebar').classList.add('m-active');
+        }
+    }
+
+    /* ==========================================================
+       2. RESIZER សម្រាប់ PC
+    ========================================================== */
+    const resizer = document.getElementById('dragResizer');
+    const editorPane = document.getElementById('editorPane');
+    const workspace = document.getElementById('workspaceContainer');
+    let isDragging = false;
+
+    resizer.addEventListener('mousedown', () => {
+        isDragging = true;
+        resizer.classList.add('dragging');
+        document.body.style.cursor = 'col-resize';
+    });
+
+    window.addEventListener('mousemove', (e) => {
+        if (!isDragging || window.innerWidth <= 768) return;
+        const workspaceRect = workspace.getBoundingClientRect();
+        let newWidth = e.clientX - workspaceRect.left;
+        if (newWidth > 180 && newWidth < (workspaceRect.width - 250)) {
+            editorPane.style.width = newWidth + 'px';
+            if (editor) editor.layout();
+        }
+    });
+
+    window.addEventListener('mouseup', () => {
+        if (isDragging) {
+            isDragging = false;
+            resizer.classList.remove('dragging');
+            document.body.style.cursor = 'default';
+            if (editor) editor.layout();
+        }
+    });
+
+    /* ==========================================================
+       3. MONACO EDITOR & RUN
+    ========================================================== */
+    const defaultCode = `<!DOCTYPE html>
+<html lang="km">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(135deg, #1e293b, #0f172a);
+      color: white;
+      font-family: sans-serif;
+      text-align: center;
+      padding: 20px;
+    }
+    h1 {
+      font-size: 2rem;
+      background: linear-gradient(90deg, #38bdf8, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .btn {
+      padding: 12px 24px;
+      background: #4f46e5;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 15px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Sao Mona Studio 🚀</h1>
+  <p>ដំណើរការបានទាំងលើ PC និងទូរស័ព្ទដៃ!</p>
+  <button class="btn" onclick="alert('ដំណើរការរលូន!')">Click Me</button>
+</body>
+</html>`;
+
+    require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' } });
+    require(['vs/editor/editor.main'], function () {
+        editor = monaco.editor.create(document.getElementById('monacoEditor'), {
+            value: defaultCode,
+            language: 'html',
+            theme: 'vs-dark',
+            automaticLayout: true,
+            fontSize: 13,
+            fontFamily: "'Fira Code', monospace",
+            minimap: { enabled: false },
+            lineNumbers: 'on',
+        });
+        runCode();
+    });
+
+    function runCode() {
+        if (!editor) return;
+        previewFrame.srcdoc = editor.getValue();
+    }
+
+    function copyForCodePen() {
+        if (!editor) return;
+        navigator.clipboard.writeText(editor.getValue()).then(() => {
+            alert("✅ បានចម្លងកូដរួចរាល់!\nអ្នកអាចយកទៅ Paste ក្នុង CodePen បានភ្លាមៗ!");
+        });
+    }
+
+    function downloadCode() {
+        if (!editor) return;
+        const blob = new Blob([editor.getValue()], { type: 'text/html' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'index.html';
+        a.click();
+    }
+
+    function toggleAI() {
+        if (window.innerWidth <= 768) {
+            switchMobileTab('ai');
+        } else {
+            document.getElementById('aiSidebar').classList.toggle('collapsed');
+            if (editor) setTimeout(() => editor.layout(), 300);
+        }
+    }
+
+    function applyCodeToEditor(codeBase64) {
+        const decodedCode = decodeURIComponent(escape(atob(codeBase64)));
+        editor.setValue(decodedCode);
+        runCode();
+        if (window.innerWidth <= 768) {
+            switchMobileTab('code');
+        }
+    }
+
+    // មុខងារចម្លងកូដចេញពី Code Box របស់ AI
+    function copySnippetCode(btn, codeBase64) {
+        const decodedCode = decodeURIComponent(escape(atob(codeBase64)));
+        navigator.clipboard.writeText(decodedCode).then(() => {
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = "✅ បានចម្លង!";
+            btn.classList.add('copied');
+            setTimeout(() => {
+                btn.innerHTML = originalHTML;
+                btn.classList.remove('copied');
+            }, 2000);
+        });
+    }
+
+    /* ==========================================================
+       4. CHAT HISTORY (LocalStorage)
+    ========================================================== */
+    const STORAGE_KEY_CHATS = 'SAO_MONA_CHATS_HISTORY_V1';
+    let currentSessionId = Date.now().toString();
+    let currentMessages = [];
+
+    function getSavedSessions() {
+        try { return JSON.parse(localStorage.getItem(STORAGE_KEY_CHATS)) || []; } catch { return []; }
+    }
+
+    function saveSessions(sessions) {
+        localStorage.setItem(STORAGE_KEY_CHATS, JSON.stringify(sessions));
+    }
+
+    function persistCurrentChat() {
+        if (currentMessages.length <= 1) return;
+        let sessions = getSavedSessions();
+        const firstUserMsg = currentMessages.find(m => m.role === 'user');
+        const title = firstUserMsg ? firstUserMsg.text.slice(0, 30) + "..." : "ការជជែកថ្មី";
+
+        const existingIndex = sessions.findIndex(s => s.id === currentSessionId);
+        const sessionData = {
+            id: currentSessionId,
+            title: title,
+            date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', month: 'short', day: 'numeric' }),
+            messages: currentMessages
+        };
+
+        if (existingIndex >= 0) {
+            sessions[existingIndex] = sessionData;
+        } else {
+            sessions.unshift(sessionData);
+        }
+        saveSessions(sessions);
+    }
+
+    function startNewChat() {
+        persistCurrentChat();
+        currentSessionId = Date.now().toString();
+        currentMessages = [];
+        aiChatBox.innerHTML = '';
+        appendAIMessage("សួស្តីបាទ! ខ្ញុំជា <b>Sao Mona Copilot</b> បង្កើតឡើងដោយ <b>SaoMona</b>។ នេះជាការសន្ទនាថ្មី តើមានអ្វីឱ្យខ្ញុំជួយសរសេរកូដដែរទេ?", 'bot');
+        historyView.classList.remove('show');
+        historyBtn.classList.remove('active');
+    }
+
+    function toggleHistory() {
+        const isShowing = historyView.classList.toggle('show');
+        historyBtn.classList.toggle('active', isShowing);
+        if (isShowing) renderHistoryList();
+    }
+
+    function renderHistoryList() {
+        persistCurrentChat();
+        const sessions = getSavedSessions();
+        historyListContainer.innerHTML = '';
+
+        if (sessions.length === 0) {
+            historyListContainer.innerHTML = `<div class="empty-history-text">⚠️ មិនមានសារណាមួយរកឃើញឡើយ!</div>`;
+            return;
+        }
+
+        sessions.forEach(session => {
+            const item = document.createElement('div');
+            item.classList.add('history-item');
+            item.innerHTML = `
+                <div class="history-item-info" onclick="loadChatSession('${session.id}')">
+                    <div class="history-item-title">${session.title}</div>
+                    <div class="history-item-date">${session.date}</div>
+                </div>
+                <button class="delete-hist-btn" onclick="promptDeleteHistoryItem('${session.id}', event)" title="លុបចោល">🗑️</button>
+            `;
+            historyListContainer.appendChild(item);
+        });
+    }
+
+    function loadChatSession(sessionId) {
+        const sessions = getSavedSessions();
+        const session = sessions.find(s => s.id === sessionId);
+        if (!session) return;
+
+        currentSessionId = session.id;
+        currentMessages = session.messages;
+        aiChatBox.innerHTML = '';
+
+        currentMessages.forEach(m => renderMessageToDOM(m.text, m.role, m.duration, false));
+        historyView.classList.remove('show');
+        historyBtn.classList.remove('active');
+    }
+
+    function exportHistoryToFile() {
+        const data = localStorage.getItem(STORAGE_KEY_CHATS) || "[]";
+        const blob = new Blob([data], { type: "application/json" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = `sao-mona-chat-history-${new Date().toISOString().slice(0,10)}.json`;
+        a.click();
+    }
+
+    function importHistoryFromFile(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const imported = JSON.parse(e.target.result);
+                if (Array.isArray(imported)) {
+                    localStorage.setItem(STORAGE_KEY_CHATS, JSON.stringify(imported));
+                    renderHistoryList();
+                    alert("✅ បានបញ្ចូលប្រវត្តិជជែកដោយជោគជ័យ!");
+                } else {
+                    alert("⚠️ File មិនត្រឹមត្រូវ!");
+                }
+            } catch (err) {
+                alert("⚠️ មិនអាចអាន File នេះបានទេ!");
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    /* ==========================================================
+       5. MARKDOWN, SEND & STOP LOGIC
+    ========================================================== */
+    function formatAIMarkdown(text) {
+        let codeBoxes = [];
+
+        text = text.replace(/```([a-zA-Z0-9_-]*)\n?([\s\S]*?)```/g, (match, lang, code) => {
+            const id = `__CODE_${codeBoxes.length}__`;
+            const cleanCode = code.trim();
+            const base64Code = btoa(unescape(encodeURIComponent(cleanCode)));
+
+            // ប៊ូតុង Copy ស្ថិតនៅខាងឆ្វេង (ខាងមុខ) ប៊ូតុង ដាក់ចូល Editor
+            codeBoxes.push(`
+                <div class="code-box">
+                    <div class="code-box-header">
+                        <span>${lang || 'CODE'}</span>
+                        <div class="code-box-actions">
+                            <button class="copy-btn-code" onclick="copySnippetCode(this, '${base64Code}')">📋 Copy</button>
+                            <button class="apply-btn" onclick="applyCodeToEditor('${base64Code}')">📥 ដាក់ចូល Editor</button>
+                        </div>
+                    </div>
+                    <pre><code>${cleanCode.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</code></pre>
+                </div>
+            `);
+            return id;
+        });
+
+        text = text
+            .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+            .replace(/\*(.*?)\*/g, '<i>$1</i>')
+            .replace(/\n/g, '<br>');
+
+        codeBoxes.forEach((c, idx) => { text = text.replace(`__CODE_${idx}__`, c); });
+        return text;
+    }
+
+    function renderMessageToDOM(text, sender, duration = null, isError = false, isAbort = false) {
+        const msg = document.createElement('div');
+        msg.classList.add('chat-msg', sender === 'user' ? 'user-msg' : 'bot-msg');
+        if (isError) msg.classList.add('error');
+        if (isAbort) msg.classList.add('abort');
+        
+        if (sender === 'user') {
+            msg.textContent = text;
+        } else {
+            msg.innerHTML = formatAIMarkdown(text);
+            if (duration && !isError && !isAbort) {
+                const badge = document.createElement('div');
+                badge.classList.add('live-speed-badge');
+                badge.textContent = `⚡ ${duration}`;
+                msg.appendChild(badge);
+            }
+        }
+
+        aiChatBox.appendChild(msg);
+        aiChatBox.scrollTop = aiChatBox.scrollHeight;
+    }
+
+    function appendAIMessage(text, sender, duration = null, isError = false, isAbort = false) {
+        currentMessages.push({ role: sender, text: text, duration: duration });
+        renderMessageToDOM(text, sender, duration, isError, isAbort);
+        persistCurrentChat();
+    }
+
+    function handleSendOrStop() {
+        if (isGenerating) {
+            if (currentAbortController) {
+                currentAbortController.abort();
+            }
+        } else {
+            handleSend();
+        }
+    }
+
+    async function handleSend() {
+        const query = aiInput.value.trim();
+        const apiKey = apiKeyInput.value.trim();
+        const selectedModel = modelSelect.value;
+
+        if (!apiKey) {
+            alert("⚠️ សូមបញ្ចូល API Key របស់អ្នកនៅប្រអប់ខាងលើជាមុនសិន!");
+            return;
+        }
+        if (!query) return;
+
+        appendAIMessage(query, 'user');
+        aiInput.value = '';
+
+        isGenerating = true;
+        sendBtnWrapper.classList.add('running');
+        iconSend.style.display = 'none';
+        iconStop.style.display = 'block';
+
+        currentAbortController = new AbortController();
+
+        const currentEditorCode = editor ? editor.getValue() : "";
+        const systemPrompt = `ឈ្មោះរបស់អ្នកគឺ 'Sao Mona' បង្កើតឡើងដោយ 'SaoMona'។ អ្នកជា AI Coding Copilot ដ៏ឆ្លាតវៃ។
+កូដបច្ចុប្បន្នរបស់អ្នកប្រើប្រាស់ក្នុង Editor គឺ៖
+\`\`\`html
+${currentEditorCode}
+\`\`\`
+ភារកិច្ចរបស់អ្នក៖ ជួយកែលម្អ សរសេរកូដថ្មី ឬដោះស្រាយ Bug តាមការស្នើសុំ។ នៅពេលសរសេរកូដ ត្រូវដាក់ក្នុង format \`\`\`html ... \`\`\` ជានិច្ច ដើម្បីឱ្យអ្នកប្រើអាចចុច "ដាក់ចូល Editor" បានភ្លាម។ ឆ្លើយជាភាសាខ្មែរយ៉ាងរលូន។`;
+
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${apiKey}`;
+        const startTime = performance.now();
+
+        try {
+            const res = await fetch(apiUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    system_instruction: { parts: [{ text: systemPrompt }] },
+                    contents: [{ role: "user", parts: [{ text: query }] }]
+                }),
+                signal: currentAbortController.signal
+            });
+
+            const data = await res.json();
+            const duration = ((performance.now() - startTime) / 1000).toFixed(2) + " វិនាទី";
+
+            if (!res.ok) throw new Error(data.error?.message || "បរាជ័យក្នុងការតភ្ជាប់ API");
+
+            const reply = data.candidates[0].content.parts[0].text;
+            appendAIMessage(reply, 'bot', duration);
+
+        } catch (error) {
+            if (error.name === 'AbortError') {
+                appendAIMessage("🛑 អ្នកបានចុចបញ្ឈប់ការឆ្លើយតប!", 'bot', null, false, true);
+            } else {
+                appendAIMessage("⚠️ កំហុស៖ " + error.message, 'bot', null, true);
+            }
+        } finally {
+            isGenerating = false;
+            currentAbortController = null;
+            sendBtnWrapper.classList.remove('running');
+            iconSend.style.display = 'block';
+            iconStop.style.display = 'none';
+        }
+    }
+
+    function quickPrompt(text) {
+        aiInput.value = text;
+        handleSend();
+    }
+
+    aiInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') handleSendOrStop();
+    });
+
+    startNewChat();
+</script>
+
+</body>
+</html>
