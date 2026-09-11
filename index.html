@@ -29,6 +29,20 @@
             touch-action: manipulation;
         }
 
+        /* ================= INVISIBLE DRAG SHIELD (ការពារកុំឱ្យរញ៉េរញ៉ៃពេលអូស) ================= */
+        .drag-shield-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 99999;
+            cursor: col-resize;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .drag-shield-overlay.active {
+            display: block;
+        }
+
         /* ================= TOP NAVBAR ================= */
         .ide-navbar {
             height: 54px;
@@ -191,12 +205,13 @@
             border-left: 1px solid #334155;
             border-right: 1px solid #334155;
             cursor: col-resize;
-            transition: background 0.2s;
+            transition: background 0.15s;
             z-index: 10;
             display: flex;
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
+            user-select: none;
         }
         .resizer::after {
             content: '';
@@ -373,7 +388,7 @@
             position: relative;
         }
 
-        /* Chat Box (លាក់ Scrollbar) */
+        /* Chat Box (លាក់ Scrollbar ទាំងស្រុង) */
         .ai-chat-box {
             flex: 1;
             padding: 16px 26px 14px 14px;
@@ -393,10 +408,10 @@
             height: 0 !important;
         }
 
-        /* Timeline Rail */
+        /* ================= TIMELINE RAIL & WHITE RING INDICATOR ================= */
         .chat-timeline-rail {
             position: absolute;
-            right: 4px;
+            right: 5px;
             top: 14px;
             bottom: 60px;
             width: 18px;
@@ -421,7 +436,7 @@
             inset: 0;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 12px;
             align-items: center;
             overflow-y: auto;
             pointer-events: auto;
@@ -441,7 +456,7 @@
             background: #475569;
             border: 2px solid #090d16;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: transform 0.2s ease, outline 0.2s ease, box-shadow 0.2s ease;
             position: relative;
             flex-shrink: 0;
         }
@@ -453,6 +468,15 @@
             background: #38bdf8;
             box-shadow: 0 0 6px rgba(56, 189, 248, 0.8);
         }
+
+        /* ================= រង្វង់មូលពណ៌សរុំអមដើម្បីសម្គាល់ទីតាំងដែលកំពុងមើល ================= */
+        .timeline-dot.active-view {
+            transform: scale(1.35) !important;
+            outline: 2px solid #ffffff !important;
+            outline-offset: 2.5px !important;
+            box-shadow: 0 0 12px rgba(255, 255, 255, 0.95), 0 0 6px #ffffff !important;
+        }
+
         .timeline-dot:hover {
             transform: scale(1.4);
             border-color: #ffffff;
@@ -461,7 +485,7 @@
         .timeline-dot::before {
             content: attr(data-preview);
             position: absolute;
-            right: 16px;
+            right: 18px;
             top: 50%;
             transform: translateY(-50%) scale(0.9);
             background: #1e293b;
@@ -478,6 +502,7 @@
             max-width: 140px;
             overflow: hidden;
             text-overflow: ellipsis;
+            z-index: 20;
         }
         .timeline-dot:hover::before {
             opacity: 1;
@@ -500,13 +525,8 @@
             animation: fadeIn 0.25s ease forwards;
         }
 
-        .chat-msg-wrapper.user {
-            align-self: flex-end;
-        }
-
-        .chat-msg-wrapper.bot {
-            align-self: flex-start;
-        }
+        .chat-msg-wrapper.user { align-self: flex-end; }
+        .chat-msg-wrapper.bot { align-self: flex-start; }
 
         .chat-msg {
             padding: 10px 14px;
@@ -573,7 +593,7 @@
             border-color: #dd6b20;
         }
 
-        /* ================= USER META ROW (Edit & Trash SVG) ================= */
+        /* User Meta Row (Edit & Trash SVG) */
         .user-meta-row {
             display: flex;
             align-items: center;
@@ -606,7 +626,7 @@
             background: #0f172a;
         }
 
-        /* ================= BOT META ROW (Time + (+@+) + Trash SVG) ================= */
+        /* Bot Meta Row */
         .bot-meta-row {
             display: flex;
             align-items: center;
@@ -1060,6 +1080,9 @@
 </head>
 <body>
 
+<!-- Invisible Drag Shield: ការពារ Text Selection និងជួយឱ្យការអូសរលូន 60FPS -->
+<div id="dragShield" class="drag-shield-overlay"></div>
+
 <!-- Top Navigation -->
 <div class="ide-navbar">
     <div class="nav-left">
@@ -1141,7 +1164,7 @@
             <div class="ai-chat-view" id="chatView">
                 <div class="ai-chat-box" id="aiChatBox"></div>
 
-                <!-- Timeline Rail -->
+                <!-- Timeline Rail ដែលមាន White Ring Indicator -->
                 <div class="chat-timeline-rail" id="chatTimelineRail" title="ខ្សែរលំហូរផ្លោះទៅកាន់សារចាស់ៗ">
                     <div class="timeline-track-line"></div>
                     <div class="timeline-dots-container" id="timelineDotsContainer"></div>
@@ -1360,7 +1383,6 @@
         });
     }
 
-    // មុខងារលុបសារទោល (User Message ឬ Bot Message)
     function promptDeleteSingleMessage(msgIndex) {
         showConfirmation("តើអ្នកចង់លុបសារនេះចោលដែរឬទេ?", () => {
             currentMessages.splice(msgIndex, 1);
@@ -1409,26 +1431,37 @@
     }
 
     /* ==========================================================
-       2. RESIZER សម្រាប់ PC
+       2. RESIZER សម្រាប់ PC (កែសម្រួលអូស SMOOTH 60FPS គ្មានរញ៉េរញ៉ៃ)
     ========================================================== */
     const resizer = document.getElementById('dragResizer');
     const editorPane = document.getElementById('editorPane');
     const workspace = document.getElementById('workspaceContainer');
+    const dragShield = document.getElementById('dragShield');
     let isDragging = false;
 
-    resizer.addEventListener('mousedown', () => {
+    resizer.addEventListener('mousedown', (e) => {
+        e.preventDefault();
         isDragging = true;
         resizer.classList.add('dragging');
-        document.body.style.cursor = 'col-resize';
+        dragShield.classList.add('active'); // បើកផ្ទាំងការពារ Mouse
+        document.body.style.userSelect = 'none';
     });
 
     window.addEventListener('mousemove', (e) => {
         if (!isDragging || window.innerWidth <= 768) return;
+        e.preventDefault();
+
         const workspaceRect = workspace.getBoundingClientRect();
         let newWidth = e.clientX - workspaceRect.left;
-        if (newWidth > 180 && newWidth < (workspaceRect.width - 250)) {
+        const minW = 180;
+        const maxW = workspaceRect.width - 250;
+
+        if (newWidth >= minW && newWidth <= maxW) {
             editorPane.style.width = newWidth + 'px';
-            if (editor) editor.layout();
+            // ប្រើ RequestAnimationFrame ដើម្បីឱ្យការអូសរលូនកម្រិត 60fps
+            requestAnimationFrame(() => {
+                if (editor) editor.layout();
+            });
         }
     });
 
@@ -1436,7 +1469,8 @@
         if (isDragging) {
             isDragging = false;
             resizer.classList.remove('dragging');
-            document.body.style.cursor = 'default';
+            dragShield.classList.remove('active'); // បិទផ្ទាំងការពារវិញ
+            document.body.style.userSelect = '';
             if (editor) editor.layout();
         }
     });
@@ -1559,15 +1593,11 @@
         });
     }
 
-    /* ==========================================================
-       មុខងារកែសម្រួលសារ User ឡើងវិញ (PENCIL EDIT)
-    ========================================================== */
     function editUserMessage(msgIndex) {
         if (!currentMessages[msgIndex]) return;
         const textToEdit = currentMessages[msgIndex].text;
         aiInput.value = textToEdit;
         aiInput.focus();
-
         aiInput.style.borderColor = '#6366f1';
         setTimeout(() => aiInput.style.borderColor = '', 1000);
     }
@@ -1704,7 +1734,7 @@
     }
 
     /* ==========================================================
-       មុខងារចុចប៊ូតុង (+@+) ភ្ជាប់ពន្លឺស្វាយជាគូ
+       មុខងារ (+@+) ភ្ជាប់ពន្លឺស្វាយជាគូ
     ========================================================== */
     function toggleContextMemory(btn, botMsgIndex) {
         if (!currentMessages[botMsgIndex]) return;
@@ -1737,7 +1767,7 @@
     }
 
     /* ==========================================================
-       5. MARKDOWN, SEND & STOP LOGIC + ICONS SVG
+       5. MARKDOWN, SEND & STOP LOGIC
     ========================================================== */
     function formatAIMarkdown(text) {
         let codeBoxes = [];
@@ -1789,17 +1819,14 @@
             msg.textContent = text;
             wrapper.appendChild(msg);
 
-            // ================= USER META: រូបខ្មៅដៃ Edit និង រូបធុងសំរាម Trash ជា SVG =================
             const userMetaRow = document.createElement('div');
             userMetaRow.classList.add('user-meta-row');
             userMetaRow.innerHTML = `
-                <!-- SVG Pencil Edit -->
                 <button class="btn-msg-action" onclick="editUserMessage(${msgIndex})" title="កែសម្រួលសំណួរនេះឡើងវិញ">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
                     </svg>
                 </button>
-                <!-- SVG Trash Delete -->
                 <button class="btn-msg-action delete" onclick="promptDeleteSingleMessage(${msgIndex})" title="លុបសារនេះ">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="3 6 5 6 21 6"></polyline>
@@ -1813,18 +1840,15 @@
             msg.innerHTML = formatAIMarkdown(text);
             wrapper.appendChild(msg);
             
-            // ================= BOT META: ⚡ ... វិនាទី + (+@+) + រូបធុងសំរាម Trash ជា SVG =================
             if (duration && !isError && !isAbort) {
                 const metaRow = document.createElement('div');
                 metaRow.classList.add('bot-meta-row');
                 
-                // 1. ⚡ រយៈពេល
                 const speedBadge = document.createElement('span');
                 speedBadge.classList.add('live-speed-badge');
                 speedBadge.textContent = `⚡ ${duration}`;
                 metaRow.appendChild(speedBadge);
 
-                // 2. ប៊ូតុង (+@+) ភ្ជាប់ខួរក្បាល
                 const memBtn = document.createElement('button');
                 memBtn.classList.add('btn-memory-hook');
                 if (isBotMemoryLinked) memBtn.classList.add('active');
@@ -1833,7 +1857,6 @@
                 memBtn.onclick = () => toggleContextMemory(memBtn, msgIndex);
                 metaRow.appendChild(memBtn);
 
-                // 3. រូបធុងសំរាម SVG ដាក់នៅខាងស្ដាំស្មើជួរផ្ដេកប៊ូតុង (+@+)
                 const trashBtn = document.createElement('button');
                 trashBtn.classList.add('btn-msg-action', 'delete');
                 trashBtn.title = "លុបចម្លើយនេះចោល";
@@ -1862,11 +1885,15 @@
         updateTimelineDots();
     }
 
+    /* ==========================================================
+       TIMELINE DOTS & WHITE RING SCROLLSPY
+    ========================================================== */
     function updateTimelineDots() {
         timelineDotsContainer.innerHTML = '';
         currentMessages.forEach((m, idx) => {
             const dot = document.createElement('div');
             dot.classList.add('timeline-dot', m.role === 'user' ? 'user-dot' : 'bot-dot');
+            dot.id = `timeline_dot_${idx}`;
             
             const previewSnippet = m.text.replace(/<[^>]*>?/gm, '').slice(0, 25) + '...';
             dot.setAttribute('data-preview', previewSnippet);
@@ -1883,7 +1910,40 @@
 
             timelineDotsContainer.appendChild(dot);
         });
+
+        updateActiveDotOnScroll();
     }
+
+    // មុខងារដាក់រង្វង់មូលពណ៌ស (Active White Ring) លើ Dot ពេលកំពុងមើលសារនោះ
+    function updateActiveDotOnScroll() {
+        const dots = timelineDotsContainer.querySelectorAll('.timeline-dot');
+        if (dots.length === 0) return;
+
+        const chatBoxRect = aiChatBox.getBoundingClientRect();
+        const focusPoint = chatBoxRect.top + (chatBoxRect.height * 0.4); // 40% ពីលើផ្ទាំង Chat
+
+        let currentActiveIdx = 0;
+        for (let i = 0; i < currentMessages.length; i++) {
+            const msgEl = document.getElementById(`chat_msg_${i}`);
+            if (msgEl) {
+                const r = msgEl.getBoundingClientRect();
+                if (r.top <= focusPoint) {
+                    currentActiveIdx = i;
+                }
+            }
+        }
+
+        dots.forEach((d, index) => {
+            if (index === currentActiveIdx) {
+                d.classList.add('active-view');
+            } else {
+                d.classList.remove('active-view');
+            }
+        });
+    }
+
+    // តាមដានការ Scroll ដើម្បីផ្លាស់ប្តូររង្វង់មូលពណ៌សតាមពេលវេលាជាក់ស្តែង
+    aiChatBox.addEventListener('scroll', updateActiveDotOnScroll);
 
     function handleSendOrStop() {
         if (isGenerating) {
@@ -1918,7 +1978,6 @@
 
         const currentEditorCode = editor ? editor.getValue() : "";
 
-        // ស្រង់យកទិន្នន័យខួរក្បាលដែលបានភ្ជាប់ (សំណួរ + ចម្លើយ)
         let selectedMemoryContext = "";
         for (let i = 0; i < currentMessages.length; i++) {
             const m = currentMessages[i];
