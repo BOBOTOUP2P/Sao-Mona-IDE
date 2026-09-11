@@ -208,6 +208,7 @@
         .resizer:hover, .resizer.dragging { background: #6366f1; }
         .resizer.dragging::after { background: white; }
 
+        /* Preview Container */
         .preview-container {
             flex: 1;
             min-width: 200px;
@@ -215,11 +216,76 @@
             flex-direction: column;
             background: #ffffff;
             border-right: 1px solid #334155;
+            overflow: hidden;
         }
 
-        #previewFrame {
+        .btn-split-preview {
+            background: #e2e8f0;
+            color: #1e293b;
+            border: 1px solid #cbd5e1;
+            padding: 2px 9px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
+            font-family: monospace;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-split-preview:hover {
+            background: #4f46e5;
+            color: white;
+            border-color: #4f46e5;
+        }
+
+        .preview-frames-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: row;
+            overflow: hidden;
+            background: #cbd5e1;
+            gap: 2px;
+        }
+
+        .preview-frame-box {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            background: #ffffff;
+            min-width: 80px;
+        }
+
+        .split-frame-header {
+            height: 22px;
+            background: #f1f5f9;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 8px;
+            font-size: 10px;
+            color: #64748b;
+            border-bottom: 1px solid #e2e8f0;
+            font-weight: 600;
+        }
+
+        .split-frame-close {
+            background: none;
+            border: none;
+            color: #ef4444;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            padding: 0 4px;
+        }
+        .split-frame-close:hover { color: #b91c1c; }
+
+        .preview-frame-box iframe {
             flex: 1;
             width: 100%;
+            height: 100%;
             border: none;
             background: #ffffff;
         }
@@ -304,16 +370,142 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            position: relative;
         }
 
+        /* Chat Box (លាក់ Scrollbar) */
         .ai-chat-box {
             flex: 1;
-            padding: 14px;
+            padding: 16px 26px 14px 14px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 16px;
             background: #090d16;
+            scroll-behavior: smooth;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .ai-chat-box::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+        }
+
+        /* Timeline Rail */
+        .chat-timeline-rail {
+            position: absolute;
+            right: 4px;
+            top: 14px;
+            bottom: 60px;
+            width: 18px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 15;
+            pointer-events: none;
+        }
+
+        .timeline-track-line {
+            position: absolute;
+            top: 6px;
+            bottom: 6px;
+            width: 2px;
+            background: rgba(148, 163, 184, 0.25);
+            border-radius: 2px;
+        }
+
+        .timeline-dots-container {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+            overflow-y: auto;
+            pointer-events: auto;
+            padding: 6px 0;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        .timeline-dots-container::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+        }
+
+        .timeline-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: #475569;
+            border: 2px solid #090d16;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            flex-shrink: 0;
+        }
+        .timeline-dot.user-dot {
+            background: #818cf8;
+            box-shadow: 0 0 6px rgba(129, 140, 248, 0.8);
+        }
+        .timeline-dot.bot-dot {
+            background: #38bdf8;
+            box-shadow: 0 0 6px rgba(56, 189, 248, 0.8);
+        }
+        .timeline-dot:hover {
+            transform: scale(1.4);
+            border-color: #ffffff;
+        }
+
+        .timeline-dot::before {
+            content: attr(data-preview);
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%) scale(0.9);
+            background: #1e293b;
+            color: #f1f5f9;
+            border: 1px solid #475569;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.15s ease;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            max-width: 140px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .timeline-dot:hover::before {
+            opacity: 1;
+            transform: translateY(-50%) scale(1);
+        }
+
+        @keyframes flashTargetMessage {
+            0% { outline: 2px solid #38bdf8; box-shadow: 0 0 18px rgba(56, 189, 248, 0.6); }
+            100% { outline: 2px solid transparent; box-shadow: none; }
+        }
+        .msg-target-highlight {
+            animation: flashTargetMessage 1.6s ease-out;
+        }
+
+        /* Message Box Wrappers */
+        .chat-msg-wrapper {
+            display: flex;
+            flex-direction: column;
+            max-width: 90%;
+            animation: fadeIn 0.25s ease forwards;
+        }
+
+        .chat-msg-wrapper.user {
+            align-self: flex-end;
+        }
+
+        .chat-msg-wrapper.bot {
+            align-self: flex-start;
         }
 
         .chat-msg {
@@ -321,23 +513,52 @@
             font-size: 13px;
             line-height: 1.6;
             border-radius: 12px;
-            max-width: 92%;
             word-break: break-word;
+            transition: all 0.3s ease;
+            position: relative;
         }
 
         .user-msg {
-            align-self: flex-end;
             background: #4f46e5;
             color: white;
             border-radius: 14px 14px 2px 14px;
         }
 
         .bot-msg {
-            align-self: flex-start;
             background: #1e293b;
             color: #e2e8f0;
             border-radius: 14px 14px 14px 2px;
             border: 1px solid #334155;
+        }
+
+        /* ពន្លឺស្វាយភ្ជាប់ជាគូ */
+        .user-msg.memory-linked-user {
+            border: 1.5px solid #c084fc !important;
+            background: #4338ca !important;
+            box-shadow: 0 0 16px rgba(168, 85, 247, 0.6) !important;
+        }
+        .user-msg.memory-linked-user::before {
+            content: '🧠 សំណួរបានភ្ជាប់';
+            position: absolute;
+            top: -18px;
+            right: 4px;
+            font-size: 10px;
+            color: #e9d5ff;
+            font-weight: 700;
+            background: #581c87;
+            padding: 1px 7px;
+            border-radius: 6px;
+            border: 1px solid #a855f7;
+            box-shadow: 0 0 8px rgba(168, 85, 247, 0.5);
+        }
+
+        .bot-msg.memory-linked {
+            border-left: 4px solid #a855f7 !important;
+            border-top: 1.5px solid #c084fc !important;
+            border-bottom: 1.5px solid #c084fc !important;
+            border-right: 1.5px solid #c084fc !important;
+            background: #191c32 !important;
+            box-shadow: 0 0 18px rgba(168, 85, 247, 0.45) !important;
         }
 
         .bot-msg.error {
@@ -352,7 +573,79 @@
             border-color: #dd6b20;
         }
 
-        /* Code Box inside Chat */
+        /* ================= USER META ROW (Edit & Trash SVG) ================= */
+        .user-meta-row {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 6px;
+            margin-top: 4px;
+            margin-right: 4px;
+        }
+
+        .btn-msg-action {
+            background: #1e293b;
+            color: #94a3b8;
+            border: 1px solid #334155;
+            padding: 3px 6px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+        .btn-msg-action:hover {
+            color: #38bdf8;
+            border-color: #38bdf8;
+            background: #0f172a;
+        }
+        .btn-msg-action.delete:hover {
+            color: #ef4444;
+            border-color: #ef4444;
+            background: #0f172a;
+        }
+
+        /* ================= BOT META ROW (Time + (+@+) + Trash SVG) ================= */
+        .bot-meta-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 5px;
+            margin-left: 6px;
+        }
+
+        .live-speed-badge {
+            font-size: 11px;
+            color: #94a3b8;
+            font-weight: 500;
+        }
+
+        .btn-memory-hook {
+            background: #1e293b;
+            color: #94a3b8;
+            border: 1px solid #475569;
+            padding: 1px 7px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 700;
+            font-family: monospace;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+        }
+        .btn-memory-hook:hover {
+            color: #ffffff;
+            border-color: #a855f7;
+        }
+        .btn-memory-hook.active {
+            background: #a855f7;
+            color: #ffffff;
+            border-color: #c084fc;
+            box-shadow: 0 0 10px rgba(168, 85, 247, 0.8);
+        }
+
         .code-box {
             margin: 8px 0;
             background: #020617;
@@ -377,7 +670,6 @@
             gap: 6px;
         }
 
-        /* ប៊ូតុង Copy នៅខាងមុខ */
         .copy-btn-code {
             background: #334155;
             color: #e2e8f0;
@@ -395,7 +687,6 @@
         .copy-btn-code:hover { background: #475569; color: white; }
         .copy-btn-code.copied { background: #10b981 !important; color: white !important; }
 
-        /* ប៊ូតុង ដាក់ចូល Editor */
         .apply-btn {
             background: #10b981;
             color: white;
@@ -427,7 +718,7 @@
             background: #0f172a;
             display: none;
             flex-direction: column;
-            z-index: 15;
+            z-index: 25;
             padding: 16px;
             overflow-y: auto;
         }
@@ -445,10 +736,7 @@
             gap: 6px;
         }
 
-        .history-top-actions {
-            display: flex;
-            gap: 6px;
-        }
+        .history-top-actions { display: flex; gap: 6px; }
 
         .empty-history-text {
             color: #94a3b8;
@@ -566,9 +854,7 @@
             transition: 0.2s;
         }
 
-        .send-btn-wrapper.running .ai-send-btn {
-            background: #ef4444;
-        }
+        .send-btn-wrapper.running .ai-send-btn { background: #ef4444; }
 
         .send-btn-wrapper.running::before {
             content: '';
@@ -582,13 +868,6 @@
         }
 
         @keyframes spinRing { to { transform: rotate(360deg); } }
-
-        .live-speed-badge {
-            font-size: 11px;
-            color: #94a3b8;
-            margin-top: 4px;
-            margin-left: 6px;
-        }
 
         /* ================= BOTTOM TABS (MOBILE) ================= */
         .mobile-nav-tabs {
@@ -790,7 +1069,7 @@
         </div>
     </div>
 
-    <!-- Center Settings (សម្រាប់ PC) -->
+    <!-- Center Settings (PC) -->
     <div class="nav-center">
         <input type="password" id="apiKeyInput" class="input-api-key" placeholder="បិទភ្ជាប់ API Key របស់អ្នកនៅទីនេះ..." title="API Key របស់អ្នក">
         <select id="modelSelect" class="model-dropdown">
@@ -801,24 +1080,15 @@
     </div>
 
     <div class="nav-actions">
-        <!-- ប៊ូតុង <~> លុបកូដ (លើ Mobile ប៉ុណ្ណោះ) -->
         <button class="btn btn-clear-mobile" onclick="promptClearEditor()" title="លុបកូដទាំងអស់">&lt;~&gt;</button>
-
-        <!-- Run Code -->
         <button class="btn btn-run" onclick="runCode()" title="Run កូដ">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
             <span>Run</span>
         </button>
-
-        <!-- ប៊ូតុង PC -->
         <button class="btn btn-codepen" onclick="copyForCodePen()">Copy ទៅ CodePen</button>
         <button class="btn btn-download" onclick="downloadCode()">Download</button>
         <button class="btn btn-toggle-ai" onclick="toggleAI()">✨ Sao Mona</button>
-
-        <!-- ប៊ូតុង Settings សម្រាប់ Mobile -->
-        <button class="btn-settings-mobile" onclick="openMobileModal()">
-            ⚙️ <span>ម៉ឺនុយ</span>
-        </button>
+        <button class="btn-settings-mobile" onclick="openMobileModal()">⚙️ <span>ម៉ឺនុយ</span></button>
     </div>
 </div>
 
@@ -833,16 +1103,24 @@
         <div id="monacoEditor"></div>
     </div>
 
-    <!-- Draggable Resizer Bar (PC) -->
+    <!-- Resizer (PC) -->
     <div class="resizer" id="dragResizer" title="អូសពង្រីកបង្រួមទទឹង"></div>
 
     <!-- Live Preview Pane -->
     <div class="preview-container" id="previewPane">
         <div class="pane-header" style="background: #f1f5f9; color: #475569; border-color: #cbd5e1;">
             <span>🌐 Live Preview</span>
-            <button onclick="runCode()" style="background: none; border: none; cursor: pointer; color: #10b981; font-weight: 600;">🔄 Refresh</button>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <button class="btn-split-preview" onclick="splitPreviewPane()" title="បំបែកផ្ទាំង Live Preview (អតិបរមា ៣)">&amp;</button>
+                <button onclick="runCode()" style="background: none; border: none; cursor: pointer; color: #10b981; font-weight: 600;">🔄 Refresh</button>
+            </div>
         </div>
-        <iframe id="previewFrame" sandbox="allow-scripts"></iframe>
+        
+        <div class="preview-frames-wrapper" id="previewFramesWrapper">
+            <div class="preview-frame-box" id="frameBox_1">
+                <iframe class="preview-frame-instance" id="frame_1" sandbox="allow-scripts"></iframe>
+            </div>
+        </div>
     </div>
 
     <!-- AI Copilot Sidebar -->
@@ -862,6 +1140,12 @@
             <!-- Chat View -->
             <div class="ai-chat-view" id="chatView">
                 <div class="ai-chat-box" id="aiChatBox"></div>
+
+                <!-- Timeline Rail -->
+                <div class="chat-timeline-rail" id="chatTimelineRail" title="ខ្សែរលំហូរផ្លោះទៅកាន់សារចាស់ៗ">
+                    <div class="timeline-track-line"></div>
+                    <div class="timeline-dots-container" id="timelineDotsContainer"></div>
+                </div>
 
                 <!-- Quick Chips -->
                 <div class="quick-chips">
@@ -967,7 +1251,7 @@
     const mApiKeyInput = document.getElementById('mApiKeyInput');
     const mModelSelect = document.getElementById('mModelSelect');
 
-    const previewFrame = document.getElementById('previewFrame');
+    const previewFramesWrapper = document.getElementById('previewFramesWrapper');
     const aiChatBox = document.getElementById('aiChatBox');
     const aiInput = document.getElementById('aiInput');
     const sendBtnWrapper = document.getElementById('sendBtnWrapper');
@@ -978,6 +1262,7 @@
     const historyBtn = document.getElementById('historyBtn');
     const historyView = document.getElementById('historyView');
     const historyListContainer = document.getElementById('historyListContainer');
+    const timelineDotsContainer = document.getElementById('timelineDotsContainer');
 
     const confirmModal = document.getElementById('confirmModal');
     const confirmModalText = document.getElementById('confirmModalText');
@@ -987,6 +1272,9 @@
     let editor = null;
     let isGenerating = false;
     let currentAbortController = null;
+
+    let previewCount = 1;
+    let frameIdCounter = 1;
 
     // Load API Key
     const savedKey = localStorage.getItem('SAO_MONA_STUDIO_KEY') || "";
@@ -1006,6 +1294,43 @@
 
     function openMobileModal() { document.getElementById('mobileSettingsModal').classList.add('show'); }
     function closeMobileModal() { document.getElementById('mobileSettingsModal').classList.remove('show'); }
+
+    /* ==========================================================
+       បំបែកផ្ទាំង LIVE PREVIEW
+    ========================================================== */
+    function splitPreviewPane() {
+        if (previewCount >= 3) {
+            alert("⚠️ អាចបំបែកផ្ទាំង Live Preview បានត្រឹមតែ ៣ ផ្ទាំងប៉ុណ្ណោះ!");
+            return;
+        }
+
+        previewCount++;
+        frameIdCounter++;
+        const currentId = frameIdCounter;
+
+        const newBox = document.createElement('div');
+        newBox.classList.add('preview-frame-box');
+        newBox.id = `frameBox_${currentId}`;
+        newBox.innerHTML = `
+            <div class="split-frame-header">
+                <span>Preview #${previewCount}</span>
+                <button class="split-frame-close" onclick="closeSplitPane(${currentId})" title="បិទផ្ទាំងនេះ">✕</button>
+            </div>
+            <iframe class="preview-frame-instance" id="frame_${currentId}" sandbox="allow-scripts"></iframe>
+        `;
+
+        previewFramesWrapper.appendChild(newBox);
+        runCode();
+    }
+
+    function closeSplitPane(id) {
+        const target = document.getElementById(`frameBox_${id}`);
+        if (target) {
+            target.remove();
+            previewCount--;
+            runCode();
+        }
+    }
 
     /* ==========================================================
        CONFIRMATION MODAL LOGIC
@@ -1032,6 +1357,15 @@
                 editor.setValue("");
                 runCode();
             }
+        });
+    }
+
+    // មុខងារលុបសារទោល (User Message ឬ Bot Message)
+    function promptDeleteSingleMessage(msgIndex) {
+        showConfirmation("តើអ្នកចង់លុបសារនេះចោលដែរឬទេ?", () => {
+            currentMessages.splice(msgIndex, 1);
+            persistCurrentChat();
+            refreshChatDOM();
         });
     }
 
@@ -1171,7 +1505,11 @@
 
     function runCode() {
         if (!editor) return;
-        previewFrame.srcdoc = editor.getValue();
+        const code = editor.getValue();
+        const allFrames = document.querySelectorAll('.preview-frame-instance');
+        allFrames.forEach(frame => {
+            frame.srcdoc = code;
+        });
     }
 
     function copyForCodePen() {
@@ -1208,7 +1546,6 @@
         }
     }
 
-    // មុខងារចម្លងកូដចេញពី Code Box របស់ AI
     function copySnippetCode(btn, codeBase64) {
         const decodedCode = decodeURIComponent(escape(atob(codeBase64)));
         navigator.clipboard.writeText(decodedCode).then(() => {
@@ -1220,6 +1557,19 @@
                 btn.classList.remove('copied');
             }, 2000);
         });
+    }
+
+    /* ==========================================================
+       មុខងារកែសម្រួលសារ User ឡើងវិញ (PENCIL EDIT)
+    ========================================================== */
+    function editUserMessage(msgIndex) {
+        if (!currentMessages[msgIndex]) return;
+        const textToEdit = currentMessages[msgIndex].text;
+        aiInput.value = textToEdit;
+        aiInput.focus();
+
+        aiInput.style.borderColor = '#6366f1';
+        setTimeout(() => aiInput.style.borderColor = '', 1000);
     }
 
     /* ==========================================================
@@ -1267,6 +1617,7 @@
         appendAIMessage("សួស្តីបាទ! ខ្ញុំជា <b>Sao Mona Copilot</b> បង្កើតឡើងដោយ <b>SaoMona</b>។ នេះជាការសន្ទនាថ្មី តើមានអ្វីឱ្យខ្ញុំជួយសរសេរកូដដែរទេ?", 'bot');
         historyView.classList.remove('show');
         historyBtn.classList.remove('active');
+        updateTimelineDots();
     }
 
     function toggleHistory() {
@@ -1306,11 +1657,20 @@
 
         currentSessionId = session.id;
         currentMessages = session.messages;
-        aiChatBox.innerHTML = '';
+        refreshChatDOM();
 
-        currentMessages.forEach(m => renderMessageToDOM(m.text, m.role, m.duration, false));
         historyView.classList.remove('show');
         historyBtn.classList.remove('active');
+    }
+
+    function refreshChatDOM() {
+        aiChatBox.innerHTML = '';
+        currentMessages.forEach((m, idx) => {
+            const isUserLinked = (m.role === 'user' && !!m.selectedForContext);
+            const isBotLinked = (m.role === 'bot' && !!m.selectedForContext);
+            renderMessageToDOM(m.text, m.role, m.duration, false, false, idx, isBotLinked, isUserLinked);
+        });
+        updateTimelineDots();
     }
 
     function exportHistoryToFile() {
@@ -1344,7 +1704,40 @@
     }
 
     /* ==========================================================
-       5. MARKDOWN, SEND & STOP LOGIC
+       មុខងារចុចប៊ូតុង (+@+) ភ្ជាប់ពន្លឺស្វាយជាគូ
+    ========================================================== */
+    function toggleContextMemory(btn, botMsgIndex) {
+        if (!currentMessages[botMsgIndex]) return;
+        const isCurrentlyActive = !currentMessages[botMsgIndex].selectedForContext;
+        
+        currentMessages[botMsgIndex].selectedForContext = isCurrentlyActive;
+        btn.classList.toggle('active', isCurrentlyActive);
+        const botEl = document.getElementById(`chat_msg_${botMsgIndex}`);
+        if (botEl) {
+            botEl.classList.toggle('memory-linked', isCurrentlyActive);
+        }
+
+        let userMsgIndex = -1;
+        for (let i = botMsgIndex - 1; i >= 0; i--) {
+            if (currentMessages[i].role === 'user') {
+                userMsgIndex = i;
+                break;
+            }
+        }
+
+        if (userMsgIndex !== -1) {
+            currentMessages[userMsgIndex].selectedForContext = isCurrentlyActive;
+            const userEl = document.getElementById(`chat_msg_${userMsgIndex}`);
+            if (userEl) {
+                userEl.classList.toggle('memory-linked-user', isCurrentlyActive);
+            }
+        }
+
+        persistCurrentChat();
+    }
+
+    /* ==========================================================
+       5. MARKDOWN, SEND & STOP LOGIC + ICONS SVG
     ========================================================== */
     function formatAIMarkdown(text) {
         let codeBoxes = [];
@@ -1354,7 +1747,6 @@
             const cleanCode = code.trim();
             const base64Code = btoa(unescape(encodeURIComponent(cleanCode)));
 
-            // ប៊ូតុង Copy ស្ថិតនៅខាងឆ្វេង (ខាងមុខ) ប៊ូតុង ដាក់ចូល Editor
             codeBoxes.push(`
                 <div class="code-box">
                     <div class="code-box-header">
@@ -1379,32 +1771,118 @@
         return text;
     }
 
-    function renderMessageToDOM(text, sender, duration = null, isError = false, isAbort = false) {
+    function renderMessageToDOM(text, sender, duration = null, isError = false, isAbort = false, msgIndex = 0, isBotMemoryLinked = false, isUserMemoryLinked = false) {
+        const wrapper = document.createElement('div');
+        wrapper.classList.add('chat-msg-wrapper', sender);
+        wrapper.id = `chat_wrapper_${msgIndex}`;
+
         const msg = document.createElement('div');
         msg.classList.add('chat-msg', sender === 'user' ? 'user-msg' : 'bot-msg');
+        msg.id = `chat_msg_${msgIndex}`;
         if (isError) msg.classList.add('error');
         if (isAbort) msg.classList.add('abort');
         
+        if (isBotMemoryLinked) msg.classList.add('memory-linked');
+        if (isUserMemoryLinked) msg.classList.add('memory-linked-user');
+        
         if (sender === 'user') {
             msg.textContent = text;
+            wrapper.appendChild(msg);
+
+            // ================= USER META: រូបខ្មៅដៃ Edit និង រូបធុងសំរាម Trash ជា SVG =================
+            const userMetaRow = document.createElement('div');
+            userMetaRow.classList.add('user-meta-row');
+            userMetaRow.innerHTML = `
+                <!-- SVG Pencil Edit -->
+                <button class="btn-msg-action" onclick="editUserMessage(${msgIndex})" title="កែសម្រួលសំណួរនេះឡើងវិញ">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+                    </svg>
+                </button>
+                <!-- SVG Trash Delete -->
+                <button class="btn-msg-action delete" onclick="promptDeleteSingleMessage(${msgIndex})" title="លុបសារនេះ">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                </button>
+            `;
+            wrapper.appendChild(userMetaRow);
+
         } else {
             msg.innerHTML = formatAIMarkdown(text);
+            wrapper.appendChild(msg);
+            
+            // ================= BOT META: ⚡ ... វិនាទី + (+@+) + រូបធុងសំរាម Trash ជា SVG =================
             if (duration && !isError && !isAbort) {
-                const badge = document.createElement('div');
-                badge.classList.add('live-speed-badge');
-                badge.textContent = `⚡ ${duration}`;
-                msg.appendChild(badge);
+                const metaRow = document.createElement('div');
+                metaRow.classList.add('bot-meta-row');
+                
+                // 1. ⚡ រយៈពេល
+                const speedBadge = document.createElement('span');
+                speedBadge.classList.add('live-speed-badge');
+                speedBadge.textContent = `⚡ ${duration}`;
+                metaRow.appendChild(speedBadge);
+
+                // 2. ប៊ូតុង (+@+) ភ្ជាប់ខួរក្បាល
+                const memBtn = document.createElement('button');
+                memBtn.classList.add('btn-memory-hook');
+                if (isBotMemoryLinked) memBtn.classList.add('active');
+                memBtn.title = "ចុចដើម្បីភ្ជាប់ខួរក្បាលទាំងសំណួរ និងចម្លើយនេះឱ្យ AI យល់ន័យបន្ត";
+                memBtn.textContent = "(+@+)";
+                memBtn.onclick = () => toggleContextMemory(memBtn, msgIndex);
+                metaRow.appendChild(memBtn);
+
+                // 3. រូបធុងសំរាម SVG ដាក់នៅខាងស្ដាំស្មើជួរផ្ដេកប៊ូតុង (+@+)
+                const trashBtn = document.createElement('button');
+                trashBtn.classList.add('btn-msg-action', 'delete');
+                trashBtn.title = "លុបចម្លើយនេះចោល";
+                trashBtn.innerHTML = `
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                `;
+                trashBtn.onclick = () => promptDeleteSingleMessage(msgIndex);
+                metaRow.appendChild(trashBtn);
+
+                wrapper.appendChild(metaRow);
             }
         }
 
-        aiChatBox.appendChild(msg);
+        aiChatBox.appendChild(wrapper);
         aiChatBox.scrollTop = aiChatBox.scrollHeight;
     }
 
     function appendAIMessage(text, sender, duration = null, isError = false, isAbort = false) {
-        currentMessages.push({ role: sender, text: text, duration: duration });
-        renderMessageToDOM(text, sender, duration, isError, isAbort);
+        const newIndex = currentMessages.length;
+        currentMessages.push({ role: sender, text: text, duration: duration, selectedForContext: false });
+        renderMessageToDOM(text, sender, duration, isError, isAbort, newIndex, false, false);
         persistCurrentChat();
+        updateTimelineDots();
+    }
+
+    function updateTimelineDots() {
+        timelineDotsContainer.innerHTML = '';
+        currentMessages.forEach((m, idx) => {
+            const dot = document.createElement('div');
+            dot.classList.add('timeline-dot', m.role === 'user' ? 'user-dot' : 'bot-dot');
+            
+            const previewSnippet = m.text.replace(/<[^>]*>?/gm, '').slice(0, 25) + '...';
+            dot.setAttribute('data-preview', previewSnippet);
+
+            dot.onclick = () => {
+                const targetMsg = document.getElementById(`chat_msg_${idx}`);
+                if (targetMsg) {
+                    targetMsg.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    targetMsg.classList.remove('msg-target-highlight');
+                    void targetMsg.offsetWidth;
+                    targetMsg.classList.add('msg-target-highlight');
+                }
+            };
+
+            timelineDotsContainer.appendChild(dot);
+        });
     }
 
     function handleSendOrStop() {
@@ -1439,12 +1917,30 @@
         currentAbortController = new AbortController();
 
         const currentEditorCode = editor ? editor.getValue() : "";
-        const systemPrompt = `ឈ្មោះរបស់អ្នកគឺ 'Sao Mona' បង្កើតឡើងដោយ 'SaoMona'។ អ្នកជា AI Coding Copilot ដ៏ឆ្លាតវៃ។
+
+        // ស្រង់យកទិន្នន័យខួរក្បាលដែលបានភ្ជាប់ (សំណួរ + ចម្លើយ)
+        let selectedMemoryContext = "";
+        for (let i = 0; i < currentMessages.length; i++) {
+            const m = currentMessages[i];
+            if (m.selectedForContext) {
+                const roleLabel = m.role === 'user' ? 'សំណួររបស់អ្នកប្រើប្រាស់' : 'ចម្លើយរបស់ Sao Mona';
+                const cleanMsgText = m.text.replace(/<[^>]*>?/gm, '');
+                selectedMemoryContext += `[${roleLabel}]:\n${cleanMsgText}\n\n`;
+            }
+        }
+
+        let systemPrompt = `ឈ្មោះរបស់អ្នកគឺ 'Sao Mona' បង្កើតឡើងដោយ 'SaoMona'។ អ្នកជា AI Coding Copilot ដ៏ឆ្លាតវៃ។
 កូដបច្ចុប្បន្នរបស់អ្នកប្រើប្រាស់ក្នុង Editor គឺ៖
 \`\`\`html
 ${currentEditorCode}
-\`\`\`
-ភារកិច្ចរបស់អ្នក៖ ជួយកែលម្អ សរសេរកូដថ្មី ឬដោះស្រាយ Bug តាមការស្នើសុំ។ នៅពេលសរសេរកូដ ត្រូវដាក់ក្នុង format \`\`\`html ... \`\`\` ជានិច្ច ដើម្បីឱ្យអ្នកប្រើអាចចុច "ដាក់ចូល Editor" បានភ្លាម។ ឆ្លើយជាភាសាខ្មែរយ៉ាងរលូន។`;
+\`\`\``;
+
+        if (selectedMemoryContext.trim() !== "") {
+            systemPrompt += `\n\n--- [ទិន្នន័យខួរក្បាលចាស់ដែលបានភ្ជាប់ (+@+)៖ មានទាំងសំណួរ និងចម្លើយ] ---\n${selectedMemoryContext}
+(ចូរផ្អែកលើសំណួរ និងចម្លើយចាស់ខាងលើនេះ ដើម្បីយល់ឱ្យច្បាស់ពីបំណងរបស់អ្នកប្រើប្រាស់ រួចវិភាគ និងសរសេរកូដបន្តឱ្យត្រូវតាមសាច់រឿង)`;
+        }
+
+        systemPrompt += `\n\nភារកិច្ចរបស់អ្នក៖ ជួយកែលម្អ សរសេរកូដថ្មី ឬដោះស្រាយ Bug តាមការស្នើសុំ។ នៅពេលសរសេរកូដ ត្រូវដាក់ក្នុង format \`\`\`html ... \`\`\` ជានិច្ច ដើម្បីឱ្យអ្នកប្រើអាចចុច "ដាក់ចូល Editor" បានភ្លាម។ ឆ្លើយជាភាសាខ្មែរយ៉ាងរលូន។`;
 
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${apiKey}`;
         const startTime = performance.now();
